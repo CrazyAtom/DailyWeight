@@ -1,11 +1,21 @@
 package com.mlab.dailyweight;
 
+import android.app.DatePickerDialog;
+import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.util.Pair;
+import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.DatePicker;
 
+import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.LimitLine.LimitLabelPosition;
@@ -16,16 +26,60 @@ import com.github.mikephil.charting.components.YAxis.YAxisLabelPosition;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.FillFormatter;
+import com.github.mikephil.charting.interfaces.dataprovider.LineDataProvider;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
 import com.mlab.dailyweight.DatabaseHelper;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends ActionBarActivity {
+
+    private static final int INPUT_WEIGHT  = 1;
+    private static final int INPUT_2  = 2;
+    private static final int INPUT_3  = 3;
 
     protected LineChart mChart;
     public DatabaseHelper mDbHelper = null;
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        menu.clear();
+        menu.add(0, INPUT_WEIGHT, 0, R.string.input_weight);
+        menu.add(0, INPUT_2, 0, "test2");
+        menu.add(0, INPUT_3, 0, "test3");
+        getMenuInflater().inflate(R.menu.action_menu, menu);
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+//    @Override
+//    public boolean onPrepareOptionsMenu(Menu menu) {
+//        return super.onPrepareOptionsMenu(menu);
+//    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case INPUT_WEIGHT :
+                dlgInputWeight();
+                break;
+            case INPUT_2 :
+                ContentValues addRowValue = new ContentValues();
+                addRowValue.put("user_id", "1");
+                addRowValue.put("date", "1");
+                addRowValue.put("weight", "50");
+                mDbHelper.insert(DatabaseHelper.TABLE_WEIGHT, addRowValue);
+                addEntry();
+                break;
+            case INPUT_3 :
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,14 +109,19 @@ public class MainActivity extends AppCompatActivity {
         mChart.setDragEnabled(true);
         mChart.setScaleEnabled(true);
         mChart.setPinchZoom(true);
+//        mChart.setVisibleXRangeMaximum(6);
+        mChart.setVisibleYRangeMaximum(15, YAxis.AxisDependency.LEFT);
 
         XAxis xAxis = mChart.getXAxis();
         xAxis.setPosition(XAxisPosition.BOTTOM);
+        xAxis.setTextSize(6);
+
         YAxis leftAxis = mChart.getAxisLeft();
         leftAxis.setAxisMaxValue(110f);
-        leftAxis.setAxisMinValue(0f);
+        leftAxis.setAxisMinValue(30f);
         leftAxis.enableGridDashedLine(10f, 10f, 0f);
         leftAxis.setDrawZeroLine(false);
+        xAxis.setTextSize(6);
 
         mChart.getAxisRight().setEnabled(false);
     }
@@ -141,17 +200,23 @@ public class MainActivity extends AppCompatActivity {
             yVals.add(new Entry((float)weights.get(i).second, i));
         }
         
+//        LineDataSet set = createSet();
         LineDataSet set = new LineDataSet(yVals, "daily weight");
-//        set.enableDashedLine(10f, 5f, 0f);
-//        set.enableDashedHighlightLine(10f, 5f, 0f);
+        set.enableDashedLine(10f, 5f, 0f);
+        set.enableDashedHighlightLine(10f, 5f, 0f);
+        set.setDrawCubic(true);
+        set.setCubicIntensity(0.2f);
         set.setColor(Color.BLACK);
-        set.setCircleColor(Color.BLACK);
         set.setLineWidth(1f);
+        set.setCircleColor(Color.BLACK);
         set.setCircleRadius(3f);
-        set.setDrawCircleHole(false);
+//        set.setDrawCircleHole(false);
         set.setValueTextSize(9f);
         set.setDrawFilled(true);
         set.setFillColor(Color.BLACK);
+        set.setAxisDependency(YAxis.AxisDependency.LEFT);
+        set.setFillAlpha(50);
+        set.setDrawHorizontalHighlightIndicator(false);
 
         ArrayList<ILineDataSet> dataSets = new ArrayList<ILineDataSet>();
         dataSets.add(set); // add the datasets
@@ -160,5 +225,68 @@ public class MainActivity extends AppCompatActivity {
         data.setValueTextSize(10f);
         
         mChart.setData(data);
+        mChart.animateX(2000);
+    }
+
+    private void addEntry() {
+
+        LineData data = mChart.getData();
+
+        if (data != null) {
+
+            ILineDataSet set = data.getDataSetByIndex(0);
+
+            if (set == null) {
+                return;
+//                set = createSet();
+//                data.addDataSet(set);
+            }
+
+            // add a new x-value first
+            data.addXValue("addValue");
+            data.addEntry(new Entry(50, set.getEntryCount()), data.getDataSetCount());
+
+            // let the chart know it's data has changed
+            mChart.notifyDataSetChanged();
+            mChart.moveViewTo(data.getXValCount() - 7, 50f, YAxis.AxisDependency.LEFT);
+        }
+    }
+
+//    private LineDataSet createSet() {
+//        LineDataSet set = new LineDataSet(yVals, "daily weight");
+//        set.enableDashedLine(10f, 5f, 0f);
+//        set.enableDashedHighlightLine(10f, 5f, 0f);
+//        set.setDrawCubic(true);
+//        set.setCubicIntensity(0.2f);
+//        set.setColor(Color.BLACK);
+//        set.setLineWidth(1f);
+//        set.setCircleColor(Color.BLACK);
+//        set.setCircleRadius(3f);
+////        set.setDrawCircleHole(false);
+//        set.setValueTextSize(9f);
+//        set.setDrawFilled(true);
+//        set.setFillColor(Color.BLACK);
+//        set.setAxisDependency(YAxis.AxisDependency.LEFT);
+//        set.setFillAlpha(50);
+//        set.setDrawHorizontalHighlightIndicator(false);
+//
+//        return set;
+//    }
+
+    private void dlgInputWeight() {
+        Calendar c = Calendar.getInstance();
+        int year = c.get(Calendar.YEAR);
+        int month = c.get(Calendar.MONTH);
+        int date = c.get(Calendar.DAY_OF_MONTH);
+
+        DatePickerDialog.OnDateSetListener mDateSetListener = new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                String date = year + "년 " + (monthOfYear + 1) + "월 " + dayOfMonth + "일";
+            }
+        };
+
+        DatePickerDialog alert = new DatePickerDialog(this, mDateSetListener, year, month, date);
+        alert.show();
     }
 }
