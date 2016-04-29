@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">DailyWeight</string>
-    <string name="input_weight">Today</string>
+    <string name="InputDlgTitle">Input Weight</string>
 </resources>

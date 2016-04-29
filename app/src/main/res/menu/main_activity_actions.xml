@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:yourapp="http://schemas.android.com/apk/res-auto">
+
+    <!-- Search, should appear as action button -->
+    <item
+        android:id="@+id/input_weight"
+        android:icon="@android:drawable/ic_menu_add"
+        android:title="input weight"
+        yourapp:showAsAction="ifRoom" />
+</menu>
